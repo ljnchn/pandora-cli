@@ -4,7 +4,7 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
+	"net/http"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -22,7 +22,7 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("status called")
+		getConfig()
 	},
 }
 
@@ -46,22 +46,46 @@ func getConfig() {
 	viper.AddConfigPath(".")      // optionally look for config in the working directory
 	err := viper.ReadInConfig()   // Find and read the config file
 	if err != nil {               // Handle errors reading the config file
-		panic(fmt.Errorf("fatal error config file: %w", err))
+		color.Red("config.json not found")
+		return
 	}
-	topLevelKeys := viper.AllSettings()
 
-	// Loop through the keys and print them
-	color.Cyan("%-10s %-10s %-10s %-10s %-10s \n", "account", "type", "pass", "plus", "shared")
+	running := false
+	bind := viper.GetString("bind")
+	if bind == "" {
+		// 发送 GET 请求
+		resp, err := http.Get("http://example.com/api")
+		if err == nil {
+			// 检查状态码是否为 200
+			if resp.StatusCode == http.StatusOK {
+				running = true
+			}
 
-	for key := range topLevelKeys {
-		var token = viper.Get(key + ".token")
-		if token == nil {
-			continue
 		}
-		var types = "access"
-		var pass = viper.Get(key+".password") == nil
-		var plus = viper.Get(key+".plus") == nil
-		var shared = viper.Get(key+".shared") == nil
-		fmt.Printf("%-10s %-10s %-10t %-10t %-10t \n", key, types, pass, plus, shared)
+		defer resp.Body.Close()
 	}
+
+	color.Cyan("%-15s %-10s \n", "bind: ", bind)
+	color.Cyan("%-15s %-10s \n", "mode: ", viper.GetString("server_mode"))
+
+	if running {
+		color.Cyan("%-15s %-10s \n", "state: ", "running")
+	} else {
+		color.Red("%-15s %-10s \n", "state: ", "stoped")
+	}
+	if viper.GetString("license_id") != "" {
+		color.Cyan("%-15s %-10s \n", "license: ", viper.GetString("license_id"))
+	} else {
+		color.Red("%-15s %-10s \n", "license: ", "no license")
+	}
+	if viper.GetString("public_share") != "" {
+		color.Cyan("%-15s %-10s \n", "public share: ", viper.GetString("public_share"))
+	}
+	if viper.GetString("site_password") != "" {
+		color.Cyan("%-15s %-10s \n", "site pass: ", viper.GetString("site_password"))
+	}
+	if viper.GetString("setup_password") != "" {
+		color.Cyan("%-15s %-10s \n", "setup pass: ", viper.GetString("setup_password"))
+	}
+
 }
