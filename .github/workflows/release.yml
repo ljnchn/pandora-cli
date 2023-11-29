@@ -21,5 +21,5 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }} # 一个默认的变量，用来实现往 Release 中添加文件
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
-          goversion: 1.21.4 # 可以指定编译使用的 Golang 版本
+          goversion: 1.24 # 可以指定编译使用的 Golang 版本
           binary_name: "pandora-cli" # 可以指定二进制文件的名称
