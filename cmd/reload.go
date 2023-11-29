@@ -43,8 +43,43 @@ func init() {
 }
 
 func reload() {
+	viper.SetConfigName("config") // name of config file (without extension)
+	viper.SetConfigType("json")   // REQUIRED if the config file does not have the extension in the name
+	viper.AddConfigPath(".")      // optionally look for config in the working directory
+	err := viper.ReadInConfig()   // Find and read the config file
+	if err != nil {               // Handle errors reading the config file
+		color.Red("config.json not found")
+		return
+	}
+	bind := viper.GetString("bind")
+	if bind == "" {
+		color.Red("bind not found")
+		return
+	}
+	setup_password := viper.GetString("setup_password")
+	if setup_password == "" {
+		color.Red("setup_password not found")
+		return
+	}
+	// 创建 HTTP 请求
+	req, err := http.NewRequest("GET", "htts://"+bind+"/setup/reload", nil)
+	if err != nil {
+		color.Red("创建请求失败:", err)
+		return
+	}
+
+	// 添加自定义的 Header
+	req.Header.Add("Authorization", "Bearer "+setup_password)
+	req.Header.Add("Content-Type", "application/json")
+
+	// 发送 HTTP 请求
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		color.Red("HTTP 请求失败:", err)
+		return
+	}
 	// 发送 GET 请求
-	resp, err := http.Get("http://localhost:8787/index/json")
 	if err != nil {
 		// 处理请求错误
 		color.Red("reload fail")
