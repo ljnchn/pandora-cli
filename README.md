@@ -8,12 +8,18 @@ Pandora Cli 是一款帮你更好地使用 Pandora 开发的命令行工具。
 ## 使用
 ```bash
 # 查看 token 列表
-pandora-cli tokens
+pandora-cli list
 
-# 重启服务
+# 重载配置
 pandora-cli relaod
 
 # 查看服务状态
 pandora-cli status
 
 ```
+
+## feature
+
+- [ ]  显示额度，使用量
+- [ ]  检查可用性
+- [ ]  自动刷新 share token
