@@ -52,9 +52,9 @@ func getConfig() {
 
 	running := false
 	bind := viper.GetString("bind")
-	if bind == "" {
+	if bind != "" {
 		// 发送 GET 请求
-		resp, err := http.Get("http://" + bind)
+		resp, err := http.Get("http://" + bind + "/auth/login")
 		if err == nil {
 			// 检查状态码是否为 200
 			if resp.StatusCode == http.StatusOK {
