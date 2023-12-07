@@ -4,6 +4,7 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/fatih/color"
@@ -51,41 +52,60 @@ func getConfig() {
 	}
 
 	running := false
+	mode := "none"
 	bind := viper.GetString("bind")
+	apiPrefix := viper.GetString("proxy_api_prefix")
+	webUrl := ""
+	proxyUrl := ""
 	if bind != "" {
+		webUrl = fmt.Sprintf("http://%s", bind)
 		// 发送 GET 请求
-		resp, err := http.Get("http://" + bind + "/auth/login")
+		resp, err := http.Get(webUrl + "/auth/login")
 		if err == nil {
 			// 检查状态码是否为 200
 			if resp.StatusCode == http.StatusOK {
 				running = true
+				mode = "web"
 			}
-
 		}
 		defer resp.Body.Close()
+
+		if len(apiPrefix) > 7 {
+			// 发送 GET 请求
+			proxyUrl = fmt.Sprintf("http://%s/%s", bind, apiPrefix)
+			resp2, err := http.Get(proxyUrl + "/v1/models")
+			if err == nil {
+				// 检查状态码是否为 200
+				if resp2.StatusCode == http.StatusOK {
+					running = true
+					mode = "web & proxy"
+				}
+
+			}
+			defer resp2.Body.Close()
+		}
 	}
 
 	color.Cyan("%-15s %-10s \n", "bind: ", bind)
-	color.Cyan("%-15s %-10s \n", "mode: ", viper.GetString("server_mode"))
+	color.Cyan("%-15s %-10s \n", "mode: ", mode)
 
 	if running {
 		color.Cyan("%-15s %-10s \n", "state: ", "running")
 	} else {
 		color.Red("%-15s %-10s \n", "state: ", "stoped")
 	}
+	color.Cyan("%-15s %-10s \n", "tls: ", viper.GetString("tls.enabled"))
 	if viper.GetString("license_id") != "" {
 		color.Cyan("%-15s %-10s \n", "license: ", viper.GetString("license_id"))
 	} else {
 		color.Red("%-15s %-10s \n", "license: ", "no license")
 	}
+	color.Cyan("%-15s %-10s \n", "web url: ", webUrl)
+	color.Cyan("%-15s %-10s \n", "proxy url: ", proxyUrl)
 	if viper.GetString("public_share") != "" {
 		color.Cyan("%-15s %-10s \n", "public share: ", viper.GetString("public_share"))
 	}
-	if viper.GetString("site_password") != "" {
-		color.Cyan("%-15s %-10s \n", "site pass: ", viper.GetString("site_password"))
-	}
-	if viper.GetString("setup_password") != "" {
-		color.Cyan("%-15s %-10s \n", "setup pass: ", viper.GetString("setup_password"))
-	}
+	color.Cyan("%-15s %-10s \n", "site pass: ", viper.GetString("site_password"))
+	color.Cyan("%-15s %-10s \n", "setup pass: ", viper.GetString("setup_password"))
 
 }
