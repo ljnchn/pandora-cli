@@ -13,7 +13,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "pandora-cli",
 	Short: "Pandora Next helpler",
-	Long:  `pandora-cli 可以帮你更简单的使用Pandora Next，查看运行状态，刷新 token 等。`,
+	Long:  `Pandora Next helpler`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -30,6 +30,7 @@ func Execute() {
 
 func init() {
 	// Here you will define your flags and configuration settings.
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 

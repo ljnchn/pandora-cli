@@ -5,7 +5,9 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -14,13 +16,8 @@ import (
 // tokensCmd represents the tokens command
 var tokensCmd = &cobra.Command{
 	Use:   "tokens",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "获取 Pandora Next 的 tokens 信息",
+	Long:  `获取 Pandora Next 的 tokens 信息`,
 	Run: func(cmd *cobra.Command, args []string) {
 		getTokens()
 	},
@@ -54,14 +51,38 @@ func getTokens() {
 	color.Cyan("%-10s %-10s %-10s %-10s %-10s \n", "account", "type", "pass", "plus", "shared")
 
 	for key := range topLevelKeys {
-		var token = viper.Get(key + ".token")
-		if token == nil {
+		var token = viper.GetString(key + ".token")
+		if token == "" {
 			continue
 		}
 		var types = "access"
+
+		if strings.HasPrefix(token, "fk-") {
+			types = "share"
+		} else if strings.Contains(token, ",") {
+			types = "account"
+		} else {
+			if isValidJWT(token) {
+				types = "access"
+			} else {
+				types = "refresh"
+			}
+		}
+
 		var pass = viper.Get(key+".password") == nil
 		var plus = viper.Get(key+".plus") == nil
 		var shared = viper.Get(key+".shared") == nil
 		fmt.Printf("%-10s %-10s %-10t %-10t %-10t \n", key, types, pass, plus, shared)
 	}
+}
+
+func isValidJWT(tokenString string) bool {
+	_, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// 不做任何签名验证，只解析token
+		return nil, nil
+	})
+
+	// 如果解析成功，err会是nil，所以返回true
+	// 如果解析失败，err不会是nil，所以返回false
+	return err == nil
 }

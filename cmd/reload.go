@@ -4,9 +4,8 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"bytes"
-	"io"
-	"net/http"
+	"fmt"
+	"pandora-cli/pkg/api"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -16,13 +15,8 @@ import (
 // reloadCmd represents the reload command
 var reloadCmd = &cobra.Command{
 	Use:   "reload",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "重载当前服务的config.json、tokens.json等配置",
+	Long:  `重载当前服务的config.json、tokens.json等配置`,
 	Run: func(cmd *cobra.Command, args []string) {
 		reload()
 	},
@@ -61,54 +55,16 @@ func reload() {
 		color.Red("setup_password not found")
 		return
 	}
-	// 创建 HTTP 请求
-	req, err := http.NewRequest("GET", "htts://"+bind+"/setup/reload", nil)
+	proxy_api_prefix := viper.GetString("proxy_api_prefix")
+	if setup_password == "" {
+		color.Red("proxy_api_prefix not found")
+		return
+	}
+
+	api.SetBaseUrl(fmt.Sprintf("http://%s/%s", bind, proxy_api_prefix))
+	err = api.Reload()
+
 	if err != nil {
-		color.Red("创建请求失败:", err)
-		return
-	}
-
-	// 添加自定义的 Header
-	req.Header.Add("Authorization", "Bearer "+setup_password)
-	req.Header.Add("Content-Type", "application/json")
-
-	// 发送 HTTP 请求
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		color.Red("HTTP 请求失败:", err)
-		return
-	}
-	// 发送 GET 请求
-	if err != nil {
-		// 处理请求错误
-		color.Red("reload fail")
-		return
-	}
-	defer resp.Body.Close()
-
-	// 检查状态码是否为 200
-	if resp.StatusCode != http.StatusOK {
-		color.Red("reload fail")
-		return
-	}
-
-	// 读取响应体
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		// 处理读取错误
-		color.Red("reload fail")
-		return
-	}
-
-	viper.SetConfigType("json")
-
-	err = viper.ReadConfig(bytes.NewBuffer(body)) // Find and read the config file
-	if err != nil {                               // Handle errors reading the config file
-		color.Red("reload fail")
-		return
-	}
-	if viper.GetInt("code") != 0 {
 		color.Red("reload fail")
 		return
 	}
