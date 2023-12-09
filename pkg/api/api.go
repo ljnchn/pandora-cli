@@ -32,6 +32,46 @@ func SetBaseUrl(url string) {
 	baseUrl = url
 }
 
+func Refresh() error {
+	// 创建 HTTP 请求
+	req, err := http.NewRequest("POST", baseUrl+authRefreshPath, nil)
+	if err != nil {
+		return err
+	}
+
+	// 发送 HTTP 请求
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	// 发送 GET 请求
+	if err != nil {
+		// 处理请求错误
+		return err
+	}
+	defer resp.Body.Close()
+
+	// 检查状态码是否为 200
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("reload fail")
+	}
+	// 读取响应体
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		// 处理读取错误
+		return err
+	}
+	err = viper.ReadConfig(bytes.NewBuffer(body)) // Find and read the config file
+	if err != nil {                               // Handle errors reading the config file
+		return err
+	}
+	if viper.GetInt("code") != 0 {
+		return err
+	}
+	return nil
+}
+
 func Reload() error {
 	// 创建 HTTP 请求
 	req, err := http.NewRequest("GET", baseUrl+setupReloadPath, nil)

@@ -4,10 +4,12 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -48,41 +50,44 @@ func getTokens() {
 	topLevelKeys := viper.AllSettings()
 
 	// Loop through the keys and print them
-	color.Cyan("%-10s %-10s %-10s %-10s %-10s \n", "account", "type", "pass", "plus", "shared")
+	color.Cyan("%-10s %-10s %-10s %-10s %-10s %-10s \n", "account", "type", "pass", "plus", "shared", "expired")
 
 	for key := range topLevelKeys {
+		var expired = ""
 		var token = viper.GetString(key + ".token")
 		if token == "" {
 			continue
 		}
-		var types = "access"
+		var types string
 
 		if strings.HasPrefix(token, "fk-") {
 			types = "share"
 		} else if strings.Contains(token, ",") {
 			types = "account"
 		} else {
-			if isValidJWT(token) {
-				types = "access"
-			} else {
-				types = "refresh"
+			types = "session"
+			parts := strings.Split(token, ".")
+			if len(parts) == 3 {
+				// 使用 base64 包的 RawStdEncoding.DecodeString 方法来解码
+				tokenData, err := base64.RawStdEncoding.DecodeString(parts[1])
+				if err == nil {
+					type JsonStruct struct {
+						Exp int64 `json:"exp"`
+					}
+					var jsondata JsonStruct
+					err2 := json.Unmarshal(tokenData, &jsondata)
+					if err2 == nil {
+						types = "access"
+						tm := time.Unix(jsondata.Exp, 0)
+						expired = tm.Format("2006-01-02 15:04:05")
+					}
+				}
 			}
 		}
 
 		var pass = viper.Get(key+".password") == nil
 		var plus = viper.Get(key+".plus") == nil
 		var shared = viper.Get(key+".shared") == nil
-		fmt.Printf("%-10s %-10s %-10t %-10t %-10t \n", key, types, pass, plus, shared)
+		fmt.Printf("%-10s %-10s %-10t %-10t %-10t %-10s \n", key, types, pass, plus, shared, expired)
 	}
-}
-
-func isValidJWT(tokenString string) bool {
-	_, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// 不做任何签名验证，只解析token
-		return nil, nil
-	})
-
-	// 如果解析成功，err会是nil，所以返回true
-	// 如果解析失败，err不会是nil，所以返回false
-	return err == nil
 }
