@@ -56,12 +56,12 @@ func reload() {
 		return
 	}
 	proxy_api_prefix := viper.GetString("proxy_api_prefix")
-	if setup_password == "" {
+	if proxy_api_prefix == "" {
 		color.Red("proxy_api_prefix not found")
 		return
 	}
-
 	api.SetBaseUrl(fmt.Sprintf("http://%s/%s", bind, proxy_api_prefix))
+
 	err = api.Reload()
 
 	if err != nil {

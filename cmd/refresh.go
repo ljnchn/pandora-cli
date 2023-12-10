@@ -53,14 +53,15 @@ func refresh() {
 		color.Red("bind not found")
 		return
 	}
-	setup_password := viper.GetString("setup_password")
-	if setup_password == "" {
-		color.Red("setup_password not found")
+	proxy_api_prefix := viper.GetString("proxy_api_prefix")
+	if proxy_api_prefix == "" {
+		color.Red("proxy_api_prefix not found")
 		return
 	}
-	proxy_api_prefix := viper.GetString("proxy_api_prefix")
-	if setup_password == "" {
-		color.Red("proxy_api_prefix not found")
+	// 检查api服务
+	_, err = api.GetModels()
+	if err != nil {
+		color.Red("api server error")
 		return
 	}
 
@@ -101,7 +102,7 @@ func refresh() {
 	}
 
 	api.SetBaseUrl(fmt.Sprintf("http://%s/%s", bind, proxy_api_prefix))
-	err = api.Refresh()
+	err = api.GetAccessToken("")
 
 	if err != nil {
 		color.Red("refresh fail")
