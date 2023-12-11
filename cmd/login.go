@@ -85,7 +85,7 @@ func login() {
 	}
 
 	// 遍历 accounts 文件夹下面的所有文件
-	err = filepath.Walk("./accounts", func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk("./sessions", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			color.Red("prevent panic by handling failure accessing a path %q: %v\n", path)
 			return err
@@ -141,6 +141,7 @@ func login() {
 					}
 				}
 			}
+			fmt.Printf("expired: %s\n", expired)
 		}
 		return nil
 	})

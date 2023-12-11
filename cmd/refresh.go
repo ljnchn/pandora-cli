@@ -5,10 +5,7 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"pandora-cli/pkg/api"
-	"path/filepath"
-	"strings"
+	// "pandora-cli/pkg/api"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -59,54 +56,51 @@ func refresh() {
 		return
 	}
 	// 检查api服务
-	_, err = api.GetModels()
+	// _, err = api.GetModels()
+	// if err != nil {
+	// 	color.Red("api server error")
+	// 	return
+	// }
+
+	// 获取 accounts.json 的数据
+	viper.SetConfigName("accounts") // name of config file (without extension)
+	viper.SetConfigType("json")     // REQUIRED if the config file does not have the extension in the name
+	viper.AddConfigPath(".")        // optionally look for config in the working directory
+	err = viper.ReadInConfig()      // Find and read the config file
+	if err != nil {                 // Handle errors reading the config file
+		color.Red("accounts.json not found")
+		return
+	}
 	if err != nil {
-		color.Red("api server error")
+		fmt.Println("Failed to read config file:", err)
 		return
 	}
 
-	// 遍历 accounts 文件夹下面的所有文件
-	err = filepath.Walk("./accounts", func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			color.Red("prevent panic by handling failure accessing a path %q: %v\n", path)
-			return err
-		}
-		if !info.IsDir() {
-			color.Cyan("visited file: %q\n", path)
-			// 获取文件名
-			filename := filepath.Base(path)
-			fmt.Printf("filename: %s\n", filename)
-			// 使用 strings.SplitN 函数分割字符串
-			parts := strings.SplitN(filename, "，", 2)
-			if len(parts) != 2 {
-				fmt.Printf("username: %s\n", parts)
-
-			}
-			// 将结果赋值给两个变量
-			username, password := parts[0], parts[1]
-			fmt.Printf("username: %s\n", username)
-			fmt.Printf("password: %s\n", password)
-			// 读取文件内容
-			content, err := os.ReadFile(path)
-			if err != nil {
-				color.Red("failed to read file: %q\n", path)
-				return err
-			}
-			color.Green("file content: %s\n", content)
-			return err
-		}
-		return nil
-	})
-	if err != nil {
+	// 读取包含点号的键
+	value := viper.GetStringMap("key.with.dot")
+	fmt.Println("Value:", value)
+	// 遍历配置
+	for key, value := range viper.GetStringMap("admin@qq.com.fk") { // 获取 fk 下的配置
+		fmt.Printf("Key: %s, Value: %#v\n", key, value)
+	}
+	fmt.Println(viper.GetString("admin@qq.password"))
+	topLevelKeys := viper.AllSettings()
+	if len(topLevelKeys) == 0 {
+		color.Cyan("no accounts")
+	}
+	for email := range topLevelKeys {
+		details := viper.GetString("admin@qq.share")
+		color.Cyan("email: %s\n", email)
+		color.Cyan("details: %s\n", details)
+		// password := details["password"].(string)
+		fmt.Printf("password: %s\n", details)
+		// fks := viper.GetStringMap(email + ".fks")
+		// for fkName, fkDetails := range fks {
+		// 	fmt.Printf("fkName: %s\n", fkName)
+		// 	token := fkDetails.(map[string]interface{})["token"].(string)
+		// 	fmt.Printf("token: %s\n", token)
+		// }
 		return
 	}
 
-	api.SetBaseUrl(fmt.Sprintf("http://%s/%s", bind, proxy_api_prefix))
-	err = api.GetAccessToken("")
-
-	if err != nil {
-		color.Red("refresh fail")
-		return
-	}
-	color.Green("refresh success")
 }

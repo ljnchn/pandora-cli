@@ -1,6 +1,0 @@
-{
-    "admin@qq.com":{
-        "fk":{"token": "fk-123"},
-        "fk2":{"token": "fk-123"}
-    }
-}

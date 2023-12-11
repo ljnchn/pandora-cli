@@ -1,0 +1,9 @@
+{
+    "admin@qq.com":{
+        "password": "password",
+        "share": {
+            "fk":{"token": "fk-123"},
+            "fk2":{"token": "fk-123"}
+        }
+    }
+}
