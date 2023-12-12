@@ -7,12 +7,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"github.com/tidwall/gjson"
 )
 
 // tokensCmd represents the tokens command
@@ -40,26 +42,30 @@ func init() {
 }
 
 func getTokens() {
-	viper.SetConfigName("tokens") // name of config file (without extension)
-	viper.SetConfigType("json")   // REQUIRED if the config file does not have the extension in the name
-	viper.AddConfigPath(".")      // optionally look for config in the working directory
-	err := viper.ReadInConfig()   // Find and read the config file
-	if err != nil {               // Handle errors reading the config file
-		panic(fmt.Errorf("fatal error config file: %w", err))
+	// 打开文件
+	file, err := os.Open("tokens.json")
+	if err != nil {
+		color.Red("tokens.json not found")
 	}
-	topLevelKeys := viper.AllSettings()
+	defer file.Close()
+
+	// 读取文件内容
+	bytes, err := io.ReadAll(file)
+	if err != nil {
+		color.Red("read tokens.json error")
+	}
+	result := gjson.ParseBytes(bytes)
 
 	// Loop through the keys and print them
-	color.Cyan("%-10s %-10s %-10s %-10s %-10s %-10s \n", "account", "type", "pass", "plus", "shared", "expired")
-
-	for key := range topLevelKeys {
+	color.Cyan("%-15s %-10s %-10s %-10s %-10s %-10s \n", "account", "type", "pass", "plus", "shared", "expired")
+	result.ForEach(func(key, value gjson.Result) bool {
 		var expired = ""
-		var token = viper.GetString(key + ".token")
+		var token = value.Get("token").String()
 		if token == "" {
-			continue
+			return true
 		}
-		var types string
 
+		var types string
 		if strings.HasPrefix(token, "fk-") {
 			types = "share"
 		} else if strings.Contains(token, ",") {
@@ -84,10 +90,10 @@ func getTokens() {
 				}
 			}
 		}
-
-		var pass = viper.Get(key+".password") == nil
-		var plus = viper.Get(key+".plus") == nil
-		var shared = viper.Get(key+".shared") == nil
-		fmt.Printf("%-10s %-10s %-10t %-10t %-10t %-10s \n", key, types, pass, plus, shared, expired)
-	}
+		var pass = value.Get("password").String() == ""
+		var plus = value.Get("plus").String() == "true"
+		var shared = value.Get("shared").String() == "true"
+		fmt.Printf("%-15s %-10s %-10t %-10t %-10t %-10s \n", key, types, pass, plus, shared, expired)
+		return true
+	})
 }

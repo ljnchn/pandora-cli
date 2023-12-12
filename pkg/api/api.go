@@ -6,9 +6,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/spf13/viper"
+	"github.com/tidwall/gjson"
 )
 
 const (
@@ -196,4 +198,20 @@ func Post(url string, options *RequestOptions) (string, error) {
 	}
 
 	return string(respBody), nil
+}
+
+func GetJsonFromFile(path string) (gjson.Result, error) {
+	// 打开文件
+	file, err := os.Open(path)
+	if err != nil {
+		return gjson.Result{}, fmt.Errorf(path + " not found")
+	}
+	defer file.Close()
+
+	// 读取文件内容
+	bytes, err := io.ReadAll(file)
+	if err != nil {
+		return gjson.Result{}, fmt.Errorf("read file error:")
+	}
+	return gjson.ParseBytes(bytes), nil
 }

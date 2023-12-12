@@ -5,11 +5,15 @@ package cmd
 
 import (
 	"fmt"
+	"io"
+	"os"
+
 	// "pandora-cli/pkg/api"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tidwall/gjson"
 )
 
 // refreshCmd represents the refresh command
@@ -62,45 +66,24 @@ func refresh() {
 	// 	return
 	// }
 
-	// 获取 accounts.json 的数据
-	viper.SetConfigName("accounts") // name of config file (without extension)
-	viper.SetConfigType("json")     // REQUIRED if the config file does not have the extension in the name
-	viper.AddConfigPath(".")        // optionally look for config in the working directory
-	err = viper.ReadInConfig()      // Find and read the config file
-	if err != nil {                 // Handle errors reading the config file
-		color.Red("accounts.json not found")
-		return
-	}
+	// 读取 accounts.json 文件内容
+	// 打开文件
+	file, err := os.Open("accounts.json")
 	if err != nil {
-		fmt.Println("Failed to read config file:", err)
-		return
+		color.Red("accounts.json not found")
 	}
+	defer file.Close()
 
-	// 读取包含点号的键
-	value := viper.GetStringMap("key.with.dot")
-	fmt.Println("Value:", value)
-	// 遍历配置
-	for key, value := range viper.GetStringMap("admin@qq.com.fk") { // 获取 fk 下的配置
-		fmt.Printf("Key: %s, Value: %#v\n", key, value)
+	// 读取文件内容
+	bytes, err := io.ReadAll(file)
+	if err != nil {
+		color.Red("read accounts.json error")
 	}
-	fmt.Println(viper.GetString("admin@qq.password"))
-	topLevelKeys := viper.AllSettings()
-	if len(topLevelKeys) == 0 {
-		color.Cyan("no accounts")
-	}
-	for email := range topLevelKeys {
-		details := viper.GetString("admin@qq.share")
-		color.Cyan("email: %s\n", email)
-		color.Cyan("details: %s\n", details)
-		// password := details["password"].(string)
-		fmt.Printf("password: %s\n", details)
-		// fks := viper.GetStringMap(email + ".fks")
-		// for fkName, fkDetails := range fks {
-		// 	fmt.Printf("fkName: %s\n", fkName)
-		// 	token := fkDetails.(map[string]interface{})["token"].(string)
-		// 	fmt.Printf("token: %s\n", token)
-		// }
-		return
-	}
+	result := gjson.ParseBytes(bytes)
+	result.ForEach(func(key, value gjson.Result) bool {
+		// fmt.Println("Key:", key.String(), "Value:", value.String())
+		fmt.Println(value.Get("password"))
+		return true // keep iterating
+	})
 
 }

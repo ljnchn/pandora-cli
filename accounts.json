@@ -1,6 +1,14 @@
 {
+    "test":"test",
     "admin@qq.com":{
-        "password": "password",
+        "password": "password1",
+        "share": {
+            "fk":{"token": "fk-123"},
+            "fk2":{"token": "fk-123"}
+        }
+    },
+    "admin2":{
+        "password": "password2",
         "share": {
             "fk":{"token": "fk-123"},
             "fk2":{"token": "fk-123"}

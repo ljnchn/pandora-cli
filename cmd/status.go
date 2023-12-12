@@ -6,10 +6,10 @@ package cmd
 import (
 	"fmt"
 	"net/http"
+	"pandora-cli/pkg/api"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // statusCmd represents the status command
@@ -37,19 +37,16 @@ func init() {
 }
 
 func getConfig() {
-	viper.SetConfigName("config") // name of config file (without extension)
-	viper.SetConfigType("json")   // REQUIRED if the config file does not have the extension in the name
-	viper.AddConfigPath(".")      // optionally look for config in the working directory
-	err := viper.ReadInConfig()   // Find and read the config file
-	if err != nil {               // Handle errors reading the config file
-		color.Red("config.json not found")
+	result, err := api.GetJsonFromFile("config.json")
+	if err != nil {
+		color.Red(err.Error())
 		return
 	}
 
 	running := false
 	mode := "none"
-	bind := viper.GetString("bind")
-	apiPrefix := viper.GetString("proxy_api_prefix")
+	bind := result.Get("bind").String()
+	apiPrefix := result.Get("proxy_api_prefix").String()
 	webUrl := ""
 	proxyUrl := ""
 	if bind != "" {
@@ -89,18 +86,18 @@ func getConfig() {
 	} else {
 		color.Red("%-15s %-10s \n", "state: ", "stoped")
 	}
-	color.Cyan("%-15s %-10s \n", "tls: ", viper.GetString("tls.enabled"))
-	if viper.GetString("license_id") != "" {
-		color.Cyan("%-15s %-10s \n", "license: ", viper.GetString("license_id"))
+	color.Cyan("%-15s %-10s \n", "tls: ", result.Get("tls.enabled").String())
+	if result.Get("license_id").String() != "" {
+		color.Cyan("%-15s %-10s \n", "license: ", result.Get("license_id"))
 	} else {
 		color.Red("%-15s %-10s \n", "license: ", "no license")
 	}
 	color.Cyan("%-15s %-10s \n", "web url: ", webUrl)
 	color.Cyan("%-15s %-10s \n", "proxy url: ", proxyUrl)
-	if viper.GetString("public_share") != "" {
-		color.Cyan("%-15s %-10s \n", "public share: ", viper.GetString("public_share"))
+	if result.Get("public_share").String() != "" {
+		color.Cyan("%-15s %-10s \n", "public share: ", result.Get("public_share"))
 	}
-	color.Cyan("%-15s %-10s \n", "site pass: ", viper.GetString("site_password"))
-	color.Cyan("%-15s %-10s \n", "setup pass: ", viper.GetString("setup_password"))
+	color.Cyan("%-15s %-10s \n", "site pass: ", result.Get("site_password"))
+	color.Cyan("%-15s %-10s \n", "setup pass: ", result.Get("setup_password"))
 
 }
