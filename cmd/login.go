@@ -4,7 +4,6 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -16,7 +15,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"github.com/tidwall/gjson"
 )
 
 type accessJsonStruct struct {
@@ -53,26 +52,18 @@ func init() {
 }
 
 func login() {
-	
-	viper.SetConfigName("config") // name of config file (without extension)
-	viper.SetConfigType("json")   // REQUIRED if the config file does not have the extension in the name
-	viper.AddConfigPath(".")      // optionally look for config in the working directory
-	err := viper.ReadInConfig()   // Find and read the config file
-	if err != nil {               // Handle errors reading the config file
-		color.Red("config.json not found")
+	result, err := api.GetJsonFromFile("./config.json")
+	if err != nil { // Handle errors reading the config file
+		color.Red(err.Error())
 		return
 	}
-	bind := viper.GetString("bind")
+
+	bind := result.Get("bind").String()
 	if bind == "" {
 		color.Red("bind not found")
 		return
 	}
-	setup_password := viper.GetString("setup_password")
-	if setup_password == "" {
-		color.Red("setup_password not found")
-		return
-	}
-	proxy_api_prefix := viper.GetString("proxy_api_prefix")
+	proxy_api_prefix := result.Get("proxy_api_prefix").String()
 	if proxy_api_prefix == "" {
 		color.Red("proxy_api_prefix not found")
 		return
@@ -129,10 +120,10 @@ func login() {
 					return nil
 				}
 			} else {
+				result = gjson.ParseBytes(content)
 				// 获取文件中的session与access
-				err = viper.ReadConfig(bytes.NewBuffer(content))
-				session_token := viper.GetString("session_token")
-				access_token := viper.GetString("access_token")
+				session_token := result.Get("session_token").String()
+				access_token := result.Get("access_token").String()
 				if session_token != "" && access_token != "" {
 					// 使用 base64 包的 RawStdEncoding.DecodeString 方法来解码
 					accessData, err := ParseAccess(access_token)

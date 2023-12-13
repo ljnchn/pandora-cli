@@ -10,9 +10,10 @@ import (
 
 	// "pandora-cli/pkg/api"
 
+	"pandora-cli/pkg/api"
+
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/tidwall/gjson"
 )
 
@@ -41,24 +42,24 @@ func init() {
 }
 
 func refresh() {
-	viper.SetConfigName("config") // name of config file (without extension)
-	viper.SetConfigType("json")   // REQUIRED if the config file does not have the extension in the name
-	viper.AddConfigPath(".")      // optionally look for config in the working directory
-	err := viper.ReadInConfig()   // Find and read the config file
-	if err != nil {               // Handle errors reading the config file
-		color.Red("config.json not found")
+	result, err := api.GetJsonFromFile("./config.json")
+	if err != nil { // Handle errors reading the config file
+		color.Red(err.Error())
 		return
 	}
-	bind := viper.GetString("bind")
+
+	bind := result.Get("bind").String()
 	if bind == "" {
 		color.Red("bind not found")
 		return
 	}
-	proxy_api_prefix := viper.GetString("proxy_api_prefix")
+
+	proxy_api_prefix := result.Get("proxy_api_prefix").String()
 	if proxy_api_prefix == "" {
 		color.Red("proxy_api_prefix not found")
 		return
 	}
+	api.SetBaseUrl(fmt.Sprintf("http://%s/%s", bind, proxy_api_prefix))
 	// 检查api服务
 	// _, err = api.GetModels()
 	// if err != nil {
@@ -79,7 +80,7 @@ func refresh() {
 	if err != nil {
 		color.Red("read accounts.json error")
 	}
-	result := gjson.ParseBytes(bytes)
+	result = gjson.ParseBytes(bytes)
 	result.ForEach(func(key, value gjson.Result) bool {
 		// fmt.Println("Key:", key.String(), "Value:", value.String())
 		fmt.Println(value.Get("password"))

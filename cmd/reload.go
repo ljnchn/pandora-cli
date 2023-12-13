@@ -9,7 +9,6 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // reloadCmd represents the reload command
@@ -37,25 +36,18 @@ func init() {
 }
 
 func reload() {
-	viper.SetConfigName("config") // name of config file (without extension)
-	viper.SetConfigType("json")   // REQUIRED if the config file does not have the extension in the name
-	viper.AddConfigPath(".")      // optionally look for config in the working directory
-	err := viper.ReadInConfig()   // Find and read the config file
-	if err != nil {               // Handle errors reading the config file
-		color.Red("config.json not found")
+	result, err := api.GetJsonFromFile("./config.json")
+	if err != nil { // Handle errors reading the config file
+		color.Red(err.Error())
 		return
 	}
-	bind := viper.GetString("bind")
+
+	bind := result.Get("bind").String()
 	if bind == "" {
 		color.Red("bind not found")
 		return
 	}
-	setup_password := viper.GetString("setup_password")
-	if setup_password == "" {
-		color.Red("setup_password not found")
-		return
-	}
-	proxy_api_prefix := viper.GetString("proxy_api_prefix")
+	proxy_api_prefix := result.Get("proxy_api_prefix").String()
 	if proxy_api_prefix == "" {
 		color.Red("proxy_api_prefix not found")
 		return
