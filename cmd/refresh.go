@@ -81,9 +81,17 @@ func refresh() {
 		color.Red("read accounts.json error")
 	}
 	result = gjson.ParseBytes(bytes)
-	result.ForEach(func(key, value gjson.Result) bool {
-		// fmt.Println("Key:", key.String(), "Value:", value.String())
-		fmt.Println(value.Get("password"))
+	result.ForEach(func(email, item gjson.Result) bool {
+		color.Cyan(email.String() + ": ")
+		// 获取需要刷新的 fk
+		share := item.Get("share")
+		if share.Type != gjson.Null {
+			share.ForEach(func(fkName, fkValue gjson.Result) bool {
+				fmt.Print(fkName.String() + ",")
+				return true
+			})
+		}
+		fmt.Println()
 		return true // keep iterating
 	})
 

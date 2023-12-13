@@ -9,7 +9,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/spf13/viper"
 	"github.com/tidwall/gjson"
 )
 
@@ -41,6 +40,7 @@ func SetBaseUrl(url string) {
 	baseUrl = url
 }
 
+// 登陆操作，结果保存到 session 下面
 func Login(username string, password string) (string, error) {
 	data := url.Values{}
 	data.Set("username", username)
@@ -59,7 +59,9 @@ func Login(username string, password string) (string, error) {
 	return body, err
 }
 
-func GetAccessToken(session_token string) error {
+// 通过session token获取access token
+func GetAccessToken(email, session_token string) (string, error) {
+	accessToken := ""
 	data := url.Values{}
 	data.Set("session_token", session_token)
 	options := RequestOptions{
@@ -67,22 +69,56 @@ func GetAccessToken(session_token string) error {
 		Timeout: 5 * time.Second,
 		body:    []byte(data.Encode()),
 	}
+	options.Headers["Content-Type"] = "application/x-www-form-urlencoded"
 
 	body, err := Post(baseUrl+authSessionPath, &options)
-	fmt.Println(body)
 	if err != nil {
-		return err
+		return accessToken, fmt.Errorf("请求失败")
 	}
-	fmt.Println(body)
-	err = viper.ReadConfig(bytes.NewBuffer([]byte(body)))
+	res := gjson.Parse(body)
+	accessToken = res.Get("access_token").String()
+	if accessToken != "" {
+		return accessToken, fmt.Errorf("获取失败")
+	}
+	// 保存到文件
+	path := "session/" + email
+	err = os.WriteFile(path, []byte(body), 0644)
 	if err != nil {
-		return err
+		return accessToken, fmt.Errorf("save file to " + path + "fail")
 	}
-	if viper.GetInt("code") != 0 {
-		return err
-	}
-	return nil
+	return accessToken, nil
+}
 
+// 根据 access token 获取 share token 信息
+func refreshShare(accessToken, fkName string) (string, error) {
+	fk := ""
+	headers := map[string]string{
+		"Content-Type": "application/x-www-form-urlencoded",
+	}
+	data := url.Values{}
+	data.Set("access_token", accessToken)
+	data.Set("unique_name", fkName)
+	data.Set("access_token", accessToken)
+	data.Set("site_limit", "")
+	data.Set("expires_in", "0")
+	data.Set("show_conversations", "true")
+	data.Set("show_userinfo", "true")
+	options := RequestOptions{
+		Headers: headers,
+		Timeout: 5 * time.Second,
+		body:    []byte(data.Encode()),
+	}
+	body, err := Post(baseUrl+tokenRegisterPath, &options)
+	if err != nil {
+		return fk, fmt.Errorf("请求失败")
+	}
+	res := gjson.Parse(body)
+	fk = res.Get("token_key").String()
+	if fk == "" {
+		return fk, fmt.Errorf("获取失败")
+
+	}
+	return fk, nil
 }
 
 // Reload 重载当前服务的config.json、tokens.json等配置。
@@ -93,11 +129,9 @@ func Reload() error {
 		// 处理读取错误
 		return err
 	}
-	err = viper.ReadConfig(bytes.NewBuffer([]byte(body))) // Find and read the config file
-	if err != nil {                                       // Handle errors reading the config file
-		return err
-	}
-	if viper.GetInt("code") != 0 {
+	res := gjson.Parse(body)
+	code := res.Get("code")
+	if code.Type != gjson.Null && code.Int() == 0 {
 		return err
 	}
 	return nil
