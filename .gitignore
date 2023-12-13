@@ -2,3 +2,4 @@ config.json
 tokens.json
 pandora-cli.exe
 pandora-cli
+dist/*
