@@ -4,13 +4,13 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io"
 	"os"
-
-	// "pandora-cli/pkg/api"
-
 	"pandora-cli/pkg/api"
+	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -61,11 +61,11 @@ func refresh() {
 	}
 	api.SetBaseUrl(fmt.Sprintf("http://%s/%s", bind, proxy_api_prefix))
 	// 检查api服务
-	// _, err = api.GetModels()
-	// if err != nil {
-	// 	color.Red("api server error")
-	// 	return
-	// }
+	_, err = api.GetModels()
+	if err != nil {
+		color.Red("api server error")
+		return
+	}
 
 	// 读取 accounts.json 文件内容
 	// 打开文件
@@ -83,11 +83,52 @@ func refresh() {
 	result = gjson.ParseBytes(bytes)
 	result.ForEach(func(email, item gjson.Result) bool {
 		color.Cyan(email.String() + ": ")
+		// 从文件获取access token
+		path := "./sessions/" + email.String()
+		content, err := os.ReadFile(path)
+		if err != nil {
+			color.Red("failed to read file: %q\n", path)
+			return true
+		}
+		accessToken := gjson.ParseBytes(content).Get("access_token").String()
+		sessionToken := gjson.ParseBytes(content).Get("session_token").String()
+		if accessToken == "" {
+			color.Red("access_token not found")
+			return true
+		}
+		// 解析 access token，判断过期时间
+		parts := strings.Split(accessToken, ".")
+		if len(parts) == 3 {
+			// 使用 base64 包的 RawStdEncoding.DecodeString 方法来解码
+			accessData, err := base64.RawStdEncoding.DecodeString(parts[1])
+			if err != nil {
+				color.Red("access_token decode error")
+			}
+			exp := gjson.ParseBytes(accessData).Get("exp").Int()
+			now := time.Now().Unix()
+			// 如果过期时间小于当前时间，则刷新
+			if exp < now {
+				color.Green("refresh success")
+				// 生成新的access token
+				accessToken, err = api.GetAccessToken(email.String(), sessionToken)
+				if err != nil {
+					color.Red("get access_token fail")
+					return true
+				}
+			}
+		}
 		// 获取需要刷新的 fk
 		share := item.Get("share")
 		if share.Type != gjson.Null {
-			share.ForEach(func(fkName, fkValue gjson.Result) bool {
-				fmt.Print(fkName.String() + ",")
+			share.ForEach(func(fkName, fkItems gjson.Result) bool {
+				fmt.Print(fkName.String() + ": ")
+				fk := ""
+				fk, err = api.RefreshShare(accessToken, fkName.String(), fkItems)
+				if err != nil {
+					color.Red("refresh fail")
+				} else {
+					color.Green("refresh success" + fk)
+				}
 				return true
 			})
 		}

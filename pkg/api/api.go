@@ -34,6 +34,15 @@ type RequestOptions struct {
 	body    []byte
 }
 
+type FkParams struct {
+	access_token       string
+	unique_name        string
+	site_limit         string
+	expires_in         string
+	show_conversations string
+	show_userinfo      string
+}
+
 var baseUrl string
 
 func SetBaseUrl(url string) {
@@ -90,19 +99,35 @@ func GetAccessToken(email, session_token string) (string, error) {
 }
 
 // 根据 access token 获取 share token 信息
-func refreshShare(accessToken, fkName string) (string, error) {
+func RefreshShare(access_token string, unique_name string, json gjson.Result) (string, error) {
+	if access_token == "" {
+		return "", fmt.Errorf("access_token is empty")
+	}
+	if unique_name == "" {
+		return "", fmt.Errorf("unique_name is empty")
+	}
 	fk := ""
 	headers := map[string]string{
 		"Content-Type": "application/x-www-form-urlencoded",
 	}
 	data := url.Values{}
-	data.Set("access_token", accessToken)
-	data.Set("unique_name", fkName)
-	data.Set("access_token", accessToken)
-	data.Set("site_limit", "")
+	// 赋值 FkParams
+	data.Set("access_token", access_token)
+	data.Set("unique_name", unique_name)
+	data.Set("site_limit", json.Get("site_limit").String())
 	data.Set("expires_in", "0")
 	data.Set("show_conversations", "true")
 	data.Set("show_userinfo", "true")
+	if json.Get("expires_in").String() != "" {
+		data.Set("expires_in", json.Get("expires_in").String())
+	}
+	if json.Get("show_conversations").String() != "" {
+		data.Set("show_conversations", json.Get("show_conversations").String())
+	}
+	if json.Get("show_userinfo").String() != "" {
+		data.Set("show_userinfo", json.Get("show_userinfo").String())
+	}
+
 	options := RequestOptions{
 		Headers: headers,
 		Timeout: 5 * time.Second,
@@ -164,6 +189,17 @@ func NewRequestOptionsWithBearer(token string) *RequestOptions {
 		},
 		Timeout: 5 * time.Second,
 		body:    []byte(""),
+	}
+}
+
+func NewFkParams() *FkParams {
+	return &FkParams{
+		access_token:       "",
+		unique_name:        "",
+		site_limit:         "",
+		expires_in:         "0",
+		show_conversations: "true",
+		show_userinfo:      "true",
 	}
 }
 
