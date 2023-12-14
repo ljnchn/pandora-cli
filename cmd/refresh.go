@@ -84,7 +84,7 @@ func refresh() {
 	result.ForEach(func(email, item gjson.Result) bool {
 		color.Cyan(email.String() + ": ")
 		// 从文件获取access token
-		path := "./sessions/" + email.String()
+		path := "./sessions/" + email.String() + ".json"
 		content, err := os.ReadFile(path)
 		if err != nil {
 			color.Red("failed to read file: %q\n", path)
