@@ -50,9 +50,9 @@ func SetBaseUrl(url string) {
 }
 
 // 登陆操作，结果保存到 session 下面
-func Login(username string, password string) (string, error) {
+func Login(email string, password string) (string, error) {
 	data := url.Values{}
-	data.Set("username", username)
+	data.Set("username", email)
 	data.Set("password", password)
 	options := RequestOptions{
 		Headers: make(map[string]string),
@@ -61,15 +61,28 @@ func Login(username string, password string) (string, error) {
 	}
 	options.Headers["Content-Type"] = "application/x-www-form-urlencoded"
 	body, err := Post(baseUrl+authLoginPath, &options)
-
 	if err != nil {
-		return body, fmt.Errorf("login fail")
+		return body, err
 	}
+	// 检查目录是否存在
+	path := "./sessions"
+	file := path + "/" + email + ".json"
+	_, err = os.Stat("./sessions")
+	if os.IsNotExist(err) {
+		// 如果目录不存在，则创建目录
+		errDir := os.MkdirAll(path, 0755)
+		if errDir != nil {
+			return body, fmt.Errorf("failed to create directory: %q\n", path)
+		}
+	}
+	err = os.WriteFile(file, []byte(body), 0644)
+
 	return body, err
 }
 
 // 通过session token获取access token
 func GetAccessToken(email, session_token string) (string, error) {
+	savePath := "sessions/" + email + ".json"
 	accessToken := ""
 	data := url.Values{}
 	data.Set("session_token", session_token)
@@ -86,14 +99,13 @@ func GetAccessToken(email, session_token string) (string, error) {
 	}
 	res := gjson.Parse(body)
 	accessToken = res.Get("access_token").String()
-	if accessToken != "" {
+	if accessToken == "" {
 		return accessToken, fmt.Errorf("获取失败")
 	}
 	// 保存到文件
-	path := "session/" + email
-	err = os.WriteFile(path, []byte(body), 0644)
+	err = os.WriteFile(savePath, []byte(body), 0644)
 	if err != nil {
-		return accessToken, fmt.Errorf("save file to " + path + "fail")
+		return accessToken, fmt.Errorf("save file to " + savePath + " fail")
 	}
 	return accessToken, nil
 }
@@ -284,4 +296,27 @@ func GetJsonFromFile(path string) (gjson.Result, error) {
 		return gjson.Result{}, fmt.Errorf("read file error:")
 	}
 	return gjson.ParseBytes(bytes), nil
+}
+
+func CheckService() error {
+	result, err := GetJsonFromFile("./config.json")
+	if err != nil { // Handle errors reading the config file
+		return fmt.Errorf("read config.json error")
+	}
+
+	bind := result.Get("bind").String()
+	if bind == "" {
+		return fmt.Errorf("bind not found")
+	}
+	proxy_api_prefix := result.Get("proxy_api_prefix").String()
+	if proxy_api_prefix == "" {
+		return fmt.Errorf("proxy_api_prefix not found")
+	}
+	SetBaseUrl(fmt.Sprintf("http://%s/%s", bind, proxy_api_prefix))
+	// 检查api服务
+	_, err = GetModels()
+	if err != nil {
+		return fmt.Errorf("api server error")
+	}
+	return nil
 }

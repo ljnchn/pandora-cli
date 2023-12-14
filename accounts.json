@@ -1,16 +1,26 @@
 {
-    "admin@qq.com":{
-        "password": "password1",
+    "admin@test.qq":{
+        "password": "",
         "share": {
-            "fk":{"token_key": "fk-123"},
-            "fk2":{"token_key": "fk-123"}
+            "fk":{"token_key": "1"}
         }
     },
-    "admin@pandorago.com":{
-        "password": "password2",
+    "info@test.qq":{
+        "password": "",
         "share": {
-            "fk":{"token_key": "fk-123"},
-            "fk2":{"token_key": "fk-123"}
+            "fk":{"token_key": ""}
+        }
+    },
+    "logoo@test.qq":{
+        "password": "",
+        "share": {
+            "fk":{"token_key": ""}
+        }
+    },
+    "ersic@test.qq":{
+        "password": "",
+        "share": {
+            "fk":{"token_key": "1"}
         }
     }
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/tidwall/gjson"
+	"github.com/tidwall/sjson"
 )
 
 // refreshCmd represents the refresh command
@@ -80,6 +81,8 @@ func refresh() {
 	if err != nil {
 		color.Red("read accounts.json error")
 	}
+
+	var newBytes []byte
 	result = gjson.ParseBytes(bytes)
 	result.ForEach(func(email, item gjson.Result) bool {
 		color.Cyan(email.String() + ": ")
@@ -127,13 +130,16 @@ func refresh() {
 				if err != nil {
 					color.Red("refresh fail")
 				} else {
+					key := fmt.Sprintf("%s.share.%s.token_key", email.String(), fkName.String())
+					newBytes, err = sjson.SetBytes(bytes, key, fk)
 					color.Green("refresh success" + fk)
 				}
 				return true
 			})
 		}
-		fmt.Println()
 		return true // keep iterating
 	})
-
+	// 保存到文件
+	err = os.WriteFile("accounts.json", newBytes, 0644)
+	// fmt.Println(string(newBytes))
 }
