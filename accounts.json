@@ -1,27 +1,10 @@
 {
-    "admin@rmb.run":{
-        "password": "RMw!AY6LX4xR8Ew",
+    "admin@gmail.com": {
+        "password": "password",
         "share": {
-            "fk":{"token_key": "1"}
+            "fk": {
+                "token_key": ""
+            }
         }
-    },
-    "info@rmb.run":{
-        "password": "RMw!AY6LX4xR8Ew",
-        "share": {
-            "fk":{"token_key": ""}
-        }
-    },
-    "logoo@live.com":{
-        "password": "RMw!AY6LX4xR8Ew",
-        "share": {
-            "fk":{"token_key": ""}
-        }
-    },
-    "ersic@duck.com":{
-        "password": "7.gVQvGbXKM-!2d",
-        "share": {
-            "fk":{"token_key": "1"}
-        }
-    },
-    "test":""
+    }
 }

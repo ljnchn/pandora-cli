@@ -10,6 +10,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
+	"github.com/tidwall/gjson"
 )
 
 // statusCmd represents the status command
@@ -91,6 +92,22 @@ func getConfig() {
 		color.Cyan("%-15s %-10s \n", "license: ", result.Get("license_id"))
 	} else {
 		color.Red("%-15s %-10s \n", "license: ", "no license")
+	}
+	// 获取使用额度
+	if licenseId := result.Get("license_id").String(); licenseId != "" {
+		// 发送 GET 请求
+		body, err := api.GetUsage(licenseId)
+		if err == nil {
+			color.Cyan("%-15s %-10s \n", "ip: ", gjson.Get(body, "ip").String())
+			color.Cyan("%-15s %-10s \n", "current: ", gjson.Get(body, "current").String())
+			color.Cyan("%-15s %-10s \n", "total: ", gjson.Get(body, "total").String())
+			ttl := gjson.Get(body, "ttl").Int()
+			hours := ttl / 3600
+			minutes := (ttl % 3600) / 60
+			remainingSeconds := ttl % 60
+			ttlStr := fmt.Sprintf("%02dh:%02dm:%02ds", hours, minutes, remainingSeconds)
+			color.Cyan("%-15s %-10s \n", "ttl: ", ttlStr)
+		}
 	}
 	color.Cyan("%-15s %-10s \n", "web url: ", webUrl)
 	color.Cyan("%-15s %-10s \n", "proxy url: ", proxyUrl)

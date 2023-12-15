@@ -184,6 +184,16 @@ func GetModels() (string, error) {
 	return body, nil
 }
 
+func GetUsage(license string) (string, error) {
+	url := fmt.Sprintf("https://dash.pandoranext.com/api/%s/usage", license)
+	body, err := Get(url, NewRequestOptions())
+	if err != nil {
+		// 处理读取错误
+		return "", err
+	}
+	return body, nil
+}
+
 // NewRequestOptions 创建一个新的 RequestOptions 实例，设置默认值
 func NewRequestOptions() *RequestOptions {
 	return &RequestOptions{

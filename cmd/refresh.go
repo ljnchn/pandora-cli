@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -15,7 +16,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/tidwall/gjson"
-	"github.com/tidwall/sjson"
 )
 
 // refreshCmd represents the refresh command
@@ -81,8 +81,18 @@ func refresh() {
 	if err != nil {
 		color.Red("read accounts.json error")
 	}
+	// JSON 字符串
+	jsonString := string(bytes)
 
-	var newBytes []byte
+	// 创建一个 map 用来存储解析后的数据
+	var jsonMap map[string]interface{}
+
+	// 解析 JSON 字符串到 map
+	err = json.Unmarshal([]byte(jsonString), &jsonMap)
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	result = gjson.ParseBytes(bytes)
 	result.ForEach(func(email, item gjson.Result) bool {
 		color.Cyan(email.String() + ": ")
@@ -130,10 +140,7 @@ func refresh() {
 				if err != nil {
 					color.Red("refresh fail")
 				} else {
-					key := fmt.Sprintf("%s.share.%s.token_key", email.String(), fkName.String())
-					newBytes, err = sjson.SetBytes(bytes, key, fk)
-					newJson, _ := sjson.Set(result.String(), key, fk)
-					fmt.Println(newJson)
+					jsonMap[email.String()].(map[string]interface{})["share"].(map[string]interface{})[fkName.String()].(map[string]interface{})["token_key"] = fk
 					color.Green("refresh success" + fk)
 				}
 				return true
@@ -142,6 +149,9 @@ func refresh() {
 		return true // keep iterating
 	})
 	// 保存到文件
-	err = os.WriteFile("accounts.json", newBytes, 0644)
-	// fmt.Println(string(newBytes))
+	prettyJSON, err := json.MarshalIndent(jsonMap, "", "    ")
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = os.WriteFile("accounts.json", prettyJSON, 0644)
 }
