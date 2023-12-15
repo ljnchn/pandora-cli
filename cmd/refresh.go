@@ -132,6 +132,8 @@ func refresh() {
 				} else {
 					key := fmt.Sprintf("%s.share.%s.token_key", email.String(), fkName.String())
 					newBytes, err = sjson.SetBytes(bytes, key, fk)
+					newJson, _ := sjson.Set(result.String(), key, fk)
+					fmt.Println(newJson)
 					color.Green("refresh success" + fk)
 				}
 				return true

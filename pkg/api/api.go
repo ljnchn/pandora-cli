@@ -175,7 +175,7 @@ func Reload() error {
 }
 
 func GetModels() (string, error) {
-	body, err := Get(baseUrl+modelsPath, NewRequestOptions())
+	body, err := Get(baseUrl+modelsPath, NewRequestOptionsWithBearer("pk-this-is-a-real-free-pool-token-for-everyone"))
 
 	if err != nil {
 		// 处理读取错误

@@ -1,26 +1,27 @@
 {
-    "admin@test.qq":{
-        "password": "",
+    "admin@rmb.run":{
+        "password": "RMw!AY6LX4xR8Ew",
         "share": {
             "fk":{"token_key": "1"}
         }
     },
-    "info@test.qq":{
-        "password": "",
+    "info@rmb.run":{
+        "password": "RMw!AY6LX4xR8Ew",
         "share": {
             "fk":{"token_key": ""}
         }
     },
-    "logoo@test.qq":{
-        "password": "",
+    "logoo@live.com":{
+        "password": "RMw!AY6LX4xR8Ew",
         "share": {
             "fk":{"token_key": ""}
         }
     },
-    "ersic@test.qq":{
-        "password": "",
+    "ersic@duck.com":{
+        "password": "7.gVQvGbXKM-!2d",
         "share": {
             "fk":{"token_key": "1"}
         }
-    }
+    },
+    "test":""
 }
