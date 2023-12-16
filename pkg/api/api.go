@@ -170,7 +170,7 @@ func RefreshShare(access_token string, unique_name string, json gjson.Result) (s
 
 // Reload 重载当前服务的config.json、tokens.json等配置。
 func Reload() error {
-	body, err := Get(baseUrl+setupReloadPath, NewRequestOptions())
+	body, err := Post(baseUrl+setupReloadPath, NewRequestOptions())
 
 	if err != nil {
 		// 处理读取错误
@@ -196,7 +196,6 @@ func GetModels() (string, error) {
 
 func GetUsage(license string) (string, error) {
 	url := fmt.Sprintf("https://dash.pandoranext.com/api/%s/usage", license)
-	fmt.Println(url)
 	body, err := Get(url, NewRequestOptions())
 	if err != nil {
 		// 处理读取错误

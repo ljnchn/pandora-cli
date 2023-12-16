@@ -132,7 +132,7 @@ func refresh() {
 					color.Red("refresh fail: " + err.Error())
 				} else {
 					jsonMap[email.String()].(map[string]interface{})["share"].(map[string]interface{})[fkName.String()].(map[string]interface{})["token_key"] = fk
-					color.Green("refresh success" + fk)
+					color.Green("refresh success: " + fk)
 				}
 				return true
 			})

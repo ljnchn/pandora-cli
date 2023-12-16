@@ -15,27 +15,27 @@ release:
 		rm -rf ${DIST_DIR}/*.gz
 		# Build for mac
 		GO111MODULE=on go build -ldflags "-s -w -X main.Version=${VERSION}"
-		tar czvf ${DIST_DIR}/${BINARY}-mac64-${VERSION}.tar.gz ./${BINARY} accounts_demo.json
+		tar czvf ${DIST_DIR}/${BINARY}-mac64-${VERSION}.tar.gz ./${BINARY} accounts.json.demo
 		# Build for arm
 		go clean
 		CGO_ENABLED=0 GOOS=linux GOARCH=arm64 GO111MODULE=on go build -ldflags "-s -w -X main.Version=${VERSION}"
-		tar czvf ${DIST_DIR}/${BINARY}-arm64-${VERSION}.tar.gz ./${BINARY} accounts_demo.json
+		tar czvf ${DIST_DIR}/${BINARY}-arm64-${VERSION}.tar.gz ./${BINARY} accounts.json.demo
 		# Build for linux386
 		go clean
 		CGO_ENABLED=0 GOOS=linux GOARCH=386 GO111MODULE=on go build -ldflags "-s -w -X main.Version=${VERSION}"
-		tar czvf ${DIST_DIR}/${BINARY}-linux386-${VERSION}.tar.gz ./${BINARY} accounts_demo.json
+		tar czvf ${DIST_DIR}/${BINARY}-linux386-${VERSION}.tar.gz ./${BINARY} accounts.json.demo
 		# Build for linux
 		go clean
 		CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -ldflags "-s -w -X main.Version=${VERSION}"
-		tar czvf ${DIST_DIR}/${BINARY}-linux64-${VERSION}.tar.gz ./${BINARY} accounts_demo.json
+		tar czvf ${DIST_DIR}/${BINARY}-linux64-${VERSION}.tar.gz ./${BINARY} accounts.json.demo
 		# Build for win386
 		go clean
 		CGO_ENABLED=0 GOOS=windows GOARCH=386 GO111MODULE=on go build -ldflags "-s -w -X main.Version=${VERSION}"
-		tar czvf ${DIST_DIR}/${BINARY}-win386-${VERSION}.tar.gz ./${BINARY}.exe accounts_demo.json
+		tar czvf ${DIST_DIR}/${BINARY}-win386-${VERSION}.tar.gz ./${BINARY}.exe accounts.json.demo
 		# Build for win
 		go clean
 		CGO_ENABLED=0 GOOS=windows GOARCH=amd64 GO111MODULE=on go build -ldflags "-s -w -X main.Version=${VERSION}"
-		tar czvf ${DIST_DIR}/${BINARY}-win64-${VERSION}.tar.gz ./${BINARY}.exe accounts_demo.json
+		tar czvf ${DIST_DIR}/${BINARY}-win64-${VERSION}.tar.gz ./${BINARY}.exe accounts.json.demo
 		go clean
 # Cleans our projects: deletes binaries
 clean:
