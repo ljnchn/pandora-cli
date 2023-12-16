@@ -21,8 +21,8 @@ import (
 // refreshCmd represents the refresh command
 var refreshCmd = &cobra.Command{
 	Use:   "refresh",
-	Short: "重载当前服务的config.json、tokens.json等配置",
-	Long:  `重载当前服务的config.json、tokens.json等配置`,
+	Short: "刷新 accounts.json 中的 access_token 和 fk",
+	Long:  `刷新 accounts.json 中的 access_token 和 fk`,
 	Run: func(cmd *cobra.Command, args []string) {
 		refresh()
 	},
@@ -43,30 +43,7 @@ func init() {
 }
 
 func refresh() {
-	result, err := api.GetJsonFromFile("./config.json")
-	if err != nil { // Handle errors reading the config file
-		color.Red(err.Error())
-		return
-	}
-
-	bind := result.Get("bind").String()
-	if bind == "" {
-		color.Red("bind not found")
-		return
-	}
-
-	proxy_api_prefix := result.Get("proxy_api_prefix").String()
-	if proxy_api_prefix == "" {
-		color.Red("proxy_api_prefix not found")
-		return
-	}
-	api.SetBaseUrl(fmt.Sprintf("http://%s/%s", bind, proxy_api_prefix))
-	// 检查api服务
-	_, err = api.GetModels()
-	if err != nil {
-		color.Red("api server error")
-		return
-	}
+	api.CheckService()
 
 	// 读取 accounts.json 文件内容
 	// 打开文件
@@ -93,7 +70,7 @@ func refresh() {
 		fmt.Println(err)
 	}
 
-	result = gjson.ParseBytes(bytes)
+	result := gjson.ParseBytes(bytes)
 	result.ForEach(func(email, item gjson.Result) bool {
 		color.Cyan(email.String() + ": ")
 		// 从文件获取access token

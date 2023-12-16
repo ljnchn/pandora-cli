@@ -1,0 +1,10 @@
+{
+    "admin@gmail.com": {
+        "password": "password",
+        "share": {
+            "fk": {
+                "token_key": ""
+            }
+        }
+    }
+}

@@ -93,7 +93,12 @@ func GetAccessToken(email, session_token string) (string, error) {
 	}
 	options.Headers["Content-Type"] = "application/x-www-form-urlencoded"
 
-	body, err := Post(baseUrl+authSessionPath, &options)
+	url := baseUrl + authSessionPath
+	if baseUrl == "" {
+		url = "https://ai.fakeopen.com/auth/session"
+	}
+
+	body, err := Post(url, &options)
 	if err != nil {
 		return accessToken, fmt.Errorf("请求失败")
 	}
@@ -145,7 +150,12 @@ func RefreshShare(access_token string, unique_name string, json gjson.Result) (s
 		Timeout: 5 * time.Second,
 		body:    []byte(data.Encode()),
 	}
-	body, err := Post(baseUrl+tokenRegisterPath, &options)
+	url := baseUrl + tokenRegisterPath
+	if baseUrl == "" {
+		url = "https://ai.fakeopen.com/token/register"
+	}
+
+	body, err := Post(url, &options)
 	if err != nil {
 		return fk, fmt.Errorf("请求失败")
 	}
@@ -186,6 +196,7 @@ func GetModels() (string, error) {
 
 func GetUsage(license string) (string, error) {
 	url := fmt.Sprintf("https://dash.pandoranext.com/api/%s/usage", license)
+	fmt.Println(url)
 	body, err := Get(url, NewRequestOptions())
 	if err != nil {
 		// 处理读取错误

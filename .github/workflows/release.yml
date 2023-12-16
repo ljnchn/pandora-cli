@@ -19,11 +19,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: wangyoucao577/go-release-action@v1.41
+      - uses: wangyoucao577/go-release-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }} # 一个默认的变量，用来实现往 Release 中添加文件
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
           binary_name: "pandora-cli" # 可以指定二进制文件的名称
           extra_files: "" # 需要包含的额外文件
-          executable_compression: upx -v

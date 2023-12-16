@@ -60,8 +60,8 @@ func getConfig() {
 				running = true
 				mode = "web"
 			}
+			defer resp.Body.Close()
 		}
-		defer resp.Body.Close()
 
 		if len(apiPrefix) > 7 {
 			// 发送 GET 请求
@@ -73,9 +73,8 @@ func getConfig() {
 					running = true
 					mode = "web & proxy"
 				}
-
+				defer resp2.Body.Close()
 			}
-			defer resp2.Body.Close()
 		}
 	}
 
@@ -107,6 +106,9 @@ func getConfig() {
 			remainingSeconds := ttl % 60
 			ttlStr := fmt.Sprintf("%02dh:%02dm:%02ds", hours, minutes, remainingSeconds)
 			color.Cyan("%-15s %-10s \n", "ttl: ", ttlStr)
+		} else {
+			color.Red("%-15s %-10s \n", "usage: ", "error")
+			color.Red(err.Error())
 		}
 	}
 	color.Cyan("%-15s %-10s \n", "web url: ", webUrl)
