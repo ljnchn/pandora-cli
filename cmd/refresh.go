@@ -43,7 +43,11 @@ func init() {
 }
 
 func refresh() {
-	api.CheckService()
+	err := api.CheckService()
+	if err != nil {
+		api.SetBaseUrl("")
+		color.Cyan("service not running, use fakeopen")
+	}
 
 	// 读取 accounts.json 文件内容
 	// 打开文件
@@ -72,7 +76,6 @@ func refresh() {
 
 	result := gjson.ParseBytes(bytes)
 	result.ForEach(func(email, item gjson.Result) bool {
-		color.Cyan(email.String() + ": ")
 		// 从文件获取access token
 		path := "./sessions/" + email.String() + ".json"
 		content, err := os.ReadFile(path)
@@ -87,6 +90,7 @@ func refresh() {
 			return true
 		}
 		// 解析 access token，判断过期时间
+		var exp = int64(0)
 		parts := strings.Split(accessToken, ".")
 		if len(parts) == 3 {
 			// 使用 base64 包的 RawStdEncoding.DecodeString 方法来解码
@@ -94,19 +98,29 @@ func refresh() {
 			if err != nil {
 				color.Red("access_token decode error")
 			}
-			exp := gjson.ParseBytes(accessData).Get("exp").Int()
-			now := time.Now().Unix()
-			// 如果过期时间小于当前时间，则刷新
-			if exp < now {
-				color.Green("refresh success")
-				// 生成新的access token
-				accessToken, err = api.GetAccessToken(email.String(), sessionToken)
-				if err != nil {
-					color.Red("get access_token fail")
-					return true
-				}
-			}
+			exp = gjson.ParseBytes(accessData).Get("exp").Int()
 		}
+		now := time.Now().Unix()
+		// 如果过期时间小于当前时间，则刷新
+		if exp < now {
+			// 生成新的access token
+			accessToken, err = api.GetAccessToken(email.String(), sessionToken)
+			if err != nil {
+				color.Red("get access_token fail")
+				return true
+			}
+			parts := strings.Split(accessToken, ".")
+			// 使用 base64 包的 RawStdEncoding.DecodeString 方法来解码
+			accessData, err := base64.RawStdEncoding.DecodeString(parts[1])
+			if err != nil {
+				color.Red("access_token decode error")
+			}
+			exp = gjson.ParseBytes(accessData).Get("exp").Int()
+		}
+		tm := time.Unix(exp, 0)
+		expired := tm.Format("2006-01-02 15:04:05")
+		color.Cyan("%s, exp: %s", email.String(), expired)
+
 		// 获取需要刷新的 fk
 		share := item.Get("share")
 		if share.Type != gjson.Null {
@@ -115,7 +129,7 @@ func refresh() {
 				fk := ""
 				fk, err = api.RefreshShare(accessToken, fkName.String(), fkItems)
 				if err != nil {
-					color.Red("refresh fail")
+					color.Red("refresh fail: " + err.Error())
 				} else {
 					jsonMap[email.String()].(map[string]interface{})["share"].(map[string]interface{})[fkName.String()].(map[string]interface{})["token_key"] = fk
 					color.Green("refresh success" + fk)
