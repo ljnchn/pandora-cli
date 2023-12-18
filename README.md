@@ -1,6 +1,12 @@
 # Pandora Cli
 ## 简单介绍
-Pandora Cli 是一款帮你更好地使用 PandoraNext 开发的命令行工具。
+Pandora Cli 基于 PandoraNext 开发的命令行工具。实现了以下功能
+
+- 查看 Pandora-Next 的运行状态，额度使用情况
+- 重载 Pandora-Next 程序
+- 查看 tokens.json 的列表
+- 自动刷新 share token，永久有效
+- 自动登陆账号
 
 ## 使用方式
 accounts.json 文件介绍
@@ -10,25 +16,22 @@ accounts.json 文件介绍
     "admin@gmail.com": {
         "password": "password",
         "share": {
-            "fk": {
+            "fk1": {
                 "token_key": ""
-            }
+            },
+            "fk2": {
+                "token_key": ""
+            },
         }
     }
 }
 ```
 
-admin@gmail.com: chatgpt 的账号
-password: chatgpt 密码
-share.fk: share token 的名字
-share.fk.token_key: share token 的key
+- admin@gmail.com: chatgpt 的账号
+- password: chatgpt 密码
+- share.fk: share token 的名字
+- share.fk.token_key: share token 的key
 
-### 手动登陆
-由于登陆接口每次消耗100额度，建议可以在[fakeopen](https://ai.fakeopen.com/auth1)登陆，然后将结果的完整数据以账户.json（admin@gamil.com.json）保存在同目录 sessions 文件夹下
-![auth1](./pic/image4.png)
-
-### 自动登陆
-自动遍历 accounts.json 中的账号登陆，并自动保存在 sessions 文件夹下面
 ## 安装
 打开安装了 PandoraNext 目录，下载对应的 release 文件，修改 accounts.json.demo 为 accounts.json
 
@@ -46,19 +49,19 @@ cp accounts.json.demo accounts.json
 
 
 - 查看 PandoraNext 服务状态
-pandora-cli status
+`./pandora-cli status`
 
 - 查看 token.json 列表
-pandora-cli tokens
+`./pandora-cli tokens`
 
 - 重载配置
-pandora-cli relaod
+`./pandora-cli relaod`
 
 - 刷新 share token
-pandora-cli refresh
+`./pandora-cli refresh`
 
 - 登陆账号
-pandora-cli login
+`./pandora-cli login`
 
 
 
@@ -90,7 +93,15 @@ pandora-cli login
 需要确保在 sessions 文件夹下面有对应的 session
 ![服务状态](./pic/image3.png)
 ### 登陆账号
+#### 自动登陆
 ```bash
 ./pandora-cli login
 ```
+调用 ./pandora-cli login 命令
 登陆 accounts.json 下面的账号
+
+自动遍历 accounts.json 中的账号登陆，并将结果自动保存在 sessions 文件夹下面
+
+#### 手动登陆
+由于登陆接口每次消耗100额度，建议可以在[fakeopen](https://ai.fakeopen.com/auth1)登陆，然后将结果的完整数据以账户.json（admin@gamil.com.json）保存在同目录 sessions 文件夹下
+![auth1](./pic/image4.png)
