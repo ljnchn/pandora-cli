@@ -17,6 +17,10 @@ const (
 	authLoginPath = "/api/auth/login"
 	// POST /api/auth/session 通过session token获取access token，使用urlencode form传递session_token参数。
 	authSessionPath = "/api/auth/session"
+	// POST 获取 refresh token
+	authRefreshPath = "/api/auth/login2"
+	// 使用 refres token
+	tokenRefreshPath = "/api/auth/refresh"
 	// GET /api/token/info/fk-xxx 获取share token信息，使用生成人的access token做为Authorization头，可查看各模型用量。
 	tokenInfoPath = "/api/token/info"
 	// POST /api/token/register 生成share token
@@ -51,6 +55,19 @@ func SetBaseUrl(url string) {
 
 // 登陆操作，结果保存到 session 下面
 func Login(email string, password string) (string, error) {
+	body := ""
+	// 检查目录是否存在
+	path := "./sessions"
+	file := path + "/" + email + ".json"
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		// 如果目录不存在，则创建目录
+		errDir := os.MkdirAll(path, 0755)
+		if errDir != nil {
+			return body, fmt.Errorf("failed to create directory: %q\n", path)
+		}
+	}
+
 	data := url.Values{}
 	data.Set("username", email)
 	data.Set("password", password)
@@ -60,14 +77,24 @@ func Login(email string, password string) (string, error) {
 		body:    []byte(data.Encode()),
 	}
 	options.Headers["Content-Type"] = "application/x-www-form-urlencoded"
-	body, err := Post(baseUrl+authLoginPath, &options)
+	body, err = Post(baseUrl+authLoginPath, &options)
 	if err != nil {
 		return body, err
 	}
+	err = os.WriteFile(file, []byte(body), 0644)
+	if err != nil {
+		return body, fmt.Errorf("failed to writeFile %s", file)
+	}
+	return body, err
+}
+
+// 登陆操作，结果保存到 refreshs 下面
+func Login2(email string, password string) (string, error) {
+	body := ""
 	// 检查目录是否存在
-	path := "./sessions"
+	path := "./refreshs"
 	file := path + "/" + email + ".json"
-	_, err = os.Stat("./sessions")
+	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		// 如果目录不存在，则创建目录
 		errDir := os.MkdirAll(path, 0755)
@@ -75,9 +102,71 @@ func Login(email string, password string) (string, error) {
 			return body, fmt.Errorf("failed to create directory: %q\n", path)
 		}
 	}
-	err = os.WriteFile(file, []byte(body), 0644)
+	data := url.Values{}
+	data.Set("username", email)
+	data.Set("password", password)
+	options := RequestOptions{
+		Headers: make(map[string]string),
+		Timeout: 10 * time.Second,
+		body:    []byte(data.Encode()),
+	}
+	options.Headers["Content-Type"] = "application/x-www-form-urlencoded"
+	body, err = Post(baseUrl+authRefreshPath, &options)
+	if err != nil {
+		return body, err
+	}
 
+	err = os.WriteFile(file, []byte(body), 0644)
+	if err != nil {
+		return body, fmt.Errorf("failed to writeFile %s", file)
+	}
+	RefreshAccessToken(email, gjson.Parse(body).Get("refresh_token").String())
 	return body, err
+}
+
+// 通过session token获取access token
+func RefreshAccessToken(email, refresh_token string) (string, error) {
+	accessToken := ""
+	// 检查目录是否存在
+	path := "./access"
+	savePath := path + "/" + email + ".json"
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		// 如果目录不存在，则创建目录
+		errDir := os.MkdirAll(path, 0755)
+		if errDir != nil {
+			return accessToken, fmt.Errorf("failed to create directory: %q\n", path)
+		}
+	}
+	data := url.Values{}
+	data.Set("refresh_token", refresh_token)
+	options := RequestOptions{
+		Headers: make(map[string]string),
+		Timeout: 5 * time.Second,
+		body:    []byte(data.Encode()),
+	}
+	options.Headers["Content-Type"] = "application/x-www-form-urlencoded"
+
+	url := baseUrl + tokenRefreshPath
+	if baseUrl == "" {
+		return accessToken, fmt.Errorf("baseUrl is empty")
+	}
+
+	body, err := Post(url, &options)
+	if err != nil {
+		return accessToken, fmt.Errorf("请求失败")
+	}
+	res := gjson.Parse(body)
+	accessToken = res.Get("access_token").String()
+	if accessToken == "" {
+		return accessToken, fmt.Errorf("获取失败")
+	}
+	// 保存到文件
+	err = os.WriteFile(savePath, []byte(body), 0644)
+	if err != nil {
+		return accessToken, fmt.Errorf("save file to " + savePath + " fail")
+	}
+	return accessToken, nil
 }
 
 // 通过session token获取access token
@@ -256,14 +345,13 @@ func Get(url string, options *RequestOptions) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	// 检查状态码是否为 200
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("StatusFail")
-	}
-
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("status code: %d, read body error", resp.StatusCode)
+	}
+	// 检查状态码是否为 200
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("status code: %d\n%s", resp.StatusCode, body)
 	}
 
 	return string(body), nil
@@ -289,14 +377,15 @@ func Post(url string, options *RequestOptions) (string, error) {
 		return "", err
 	}
 	defer resp.Body.Close()
-	// 检查状态码是否为 200
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("StatusFail")
-	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("status code: %d, read body error", resp.StatusCode)
+	}
+
+	// 检查状态码是否为 200
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("status code: %d\n%s", resp.StatusCode, respBody)
 	}
 
 	return string(respBody), nil
