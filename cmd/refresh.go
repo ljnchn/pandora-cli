@@ -77,9 +77,9 @@ func refresh() {
 	result := gjson.ParseBytes(bytes)
 	result.ForEach(func(email, item gjson.Result) bool {
 		// 获取 access token
-		accessToken, err := getAccessTokenBySession(email.String())
+		accessToken, err := getAccessTokenByRefresh(email.String())
 		if err != nil {
-			accessToken, err = getAccessTokenByRefresh(email.String())
+			accessToken, err = getAccessTokenBySession(email.String())
 			if err != nil {
 				color.Red("get access_token fail: %s", err.Error())
 				return true

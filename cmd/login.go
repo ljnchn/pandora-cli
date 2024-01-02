@@ -40,12 +40,15 @@ var loginCmd = &cobra.Command{
 				return
 			}
 			email, password := parts[0], parts[1]
-			_, err := loginOne(email, password)
+			fmt.Printf("email: %s, password: %s\n", email, password)
+			body, err := loginOne(email, password)
 			if err != nil {
-				color.Red(err.Error())
+				color.Red("登陆失败: %s", err.Error())
+				color.Red(body)
 				return
 			}
 			color.Green("登陆成功")
+			fmt.Println(body)
 			return
 		} else {
 			loginAll()
