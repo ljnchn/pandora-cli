@@ -63,7 +63,8 @@ cp accounts.json.demo accounts.json
 - 登陆账号
 `./pandora-cli login`
 
-
+- 获取 refresh_token
+`./pandora-cli login2`
 
 ### 查看 PandoraNext 服务状态
 ```bash
@@ -93,6 +94,10 @@ cp accounts.json.demo accounts.json
 需要确保在 sessions 文件夹下面有对应的 session
 ![服务状态](./pic/image3.png)
 ### 登陆账号
+#### 手动登陆
+```bash
+./pandora-cli login 'email,password'
+```
 #### 自动登陆
 ```bash
 ./pandora-cli login
@@ -105,3 +110,8 @@ cp accounts.json.demo accounts.json
 #### 手动登陆
 由于登陆接口每次消耗100额度，建议可以在[fakeopen](https://ai.fakeopen.com/auth1)登陆，然后将结果的完整数据以账户.json（admin@gamil.com.json）保存在同目录 sessions 文件夹下
 ![auth1](./pic/image4.png)
+
+### 获取 refresh_token
+```bash
+./pandora-cli login2 'email,password'
+```
