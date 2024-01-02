@@ -7,6 +7,7 @@ Pandora Cli 基于 PandoraNext 开发的命令行工具。实现了以下功能
 - 查看 tokens.json 的列表
 - 自动刷新 share token，永久有效
 - 自动登陆账号
+- 获取 refresh_token
 
 ## 使用方式
 accounts.json 文件介绍
@@ -37,7 +38,7 @@ accounts.json 文件介绍
 
 示例:
 ``` bash
-wget https://github.com/ljnchn/pandora-cli/releases/download/v0.01/pandora-cli-linux386-0.01.tar.gz
+wget https://github.com/ljnchn/pandora-cli/releases/download/v0.02/pandora-cli-linux-386-v0.02.tar.gz
 
 cp accounts.json.demo accounts.json
 
