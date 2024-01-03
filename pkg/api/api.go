@@ -19,6 +19,8 @@ const (
 	authSessionPath = "/api/auth/session"
 	// POST 获取 refresh token
 	authRefreshPath = "/api/auth/login2"
+	// POST /api/auth/platform/login 获取sess-开头的sess key，使用urlencode form传递username 和 password 参数。
+	authSessPath = "/api/auth/platform/login"
 	// 使用 refres token
 	tokenRefreshPath = "/api/auth/refresh"
 	// GET /api/token/info/fk-xxx 获取share token信息，使用生成人的access token做为Authorization头，可查看各模型用量。
@@ -51,6 +53,42 @@ var baseUrl string
 
 func SetBaseUrl(url string) {
 	baseUrl = url
+}
+
+// 登陆操作，结果保存到 session 下面
+func Sess(email string, password string) (string, error) {
+	body := ""
+	// 检查目录是否存在
+	path := "./sess"
+	file := path + "/" + email + ".json"
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		// 如果目录不存在，则创建目录
+		errDir := os.MkdirAll(path, 0755)
+		if errDir != nil {
+			return body, fmt.Errorf("failed to create directory: %q\n", path)
+		}
+	}
+
+	data := url.Values{}
+	data.Set("username", email)
+	data.Set("password", password)
+	data.Set("prompt", "login")
+	options := RequestOptions{
+		Headers: make(map[string]string),
+		Timeout: 10 * time.Second,
+		body:    []byte(data.Encode()),
+	}
+	options.Headers["Content-Type"] = "application/x-www-form-urlencoded"
+	body, err = Post(baseUrl+authSessPath, &options)
+	if err != nil {
+		return body, err
+	}
+	err = os.WriteFile(file, []byte(body), 0644)
+	if err != nil {
+		return body, fmt.Errorf("failed to writeFile %s", file)
+	}
+	return body, err
 }
 
 // 登陆操作，结果保存到 session 下面
